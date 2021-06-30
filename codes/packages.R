@@ -15,7 +15,8 @@ suppressMessages({
     "pheatmap",
     # data description
     "DescTools",
-    "MVN"
+    "MVN",
+    "psych"
   )
   install_lib <- load_lib[!(load_lib %in% installed.packages())] # check package
   if (length(install_lib)) for (i in install_lib) install.packages(i) # install
