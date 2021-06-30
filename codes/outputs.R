@@ -1,27 +1,31 @@
 # save tables --------------------------------------------------------------
 
 # save desc_data
-write.csv(desc_data,
+write.table(desc_data,
+  sep = ",",
   file = "./outputs/tables/TabS1.csv",
-  quote = FALSE, row.names = FALSE
+  quote = FALSE, col.names = FALSE
 )
 
 # save desc_stat
-write.csv(desc_stat,
+write.table(desc_stat,
+  sep = ",",
   file = "./outputs/tables/TabS2.csv",
   quote = FALSE, row.names = FALSE
 )
 
 # save desc_cor
-write.csv(desc_cor,
+write.table(desc_cor,
+  sep = ",",
   file = "./outputs/tables/TabS3.csv",
-  quote = FALSE, row.names = FALSE
+  quote = FALSE, row.names = TRUE
 )
 
 # save auc
-write.csv(auc,
+write.table(auc,
+  sep = ",",
   file = "./outputs/tables/TabS4.csv",
-  quote = FALSE, row.names = FALSE
+  quote = FALSE, col.names = FALSE
 )
 
 # save plots ---------------------------------------------------------------

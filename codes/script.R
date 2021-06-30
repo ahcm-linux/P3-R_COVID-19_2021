@@ -9,6 +9,12 @@
 # external sources: none
 ################################################################################
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: On lines 181 - 183 you must choose the three measures of variable
+# importance in order to keep going with the data analysis. Run the script only
+# til line 178, then evaluate the results obtained and choose the three measures
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # script's parameters ----------------------------------------------------------
 # you can change the parameters below according to your needs
 
@@ -20,7 +26,7 @@ std_data <- FALSE # set to TRUE if you wnat to standardize the data
 # random forest related parameters
 n_varibles_in_impt_plots <- 3 # choose number of variables to show plots
 
-n_trees <- 10000 # initial number of trees
+n_trees <- 2000 # initial number of trees
 
 # graphics related parameters
 width_factor <- 2 # increase width_factor to save plots with larger width
@@ -61,6 +67,7 @@ desc_stat <- mvn(my_data[, -n])$Descriptives # standard descriptive statistics
 desc_cor <- cor(my_data[, -n], method = "spearman") # spearman correlation
 
 # plot desc_cor using clustering on rows and columns
+cat("(New plot window) heatmap for spearman correlation matrix\n\n")
 p_cor <- pheatmap(desc_cor,
   clustering_method = "ward.D",
   cluster_rows = TRUE, cluster_cols = TRUE,
@@ -77,10 +84,12 @@ sample_recipe <- recipe(Group ~ ., data = sample_train)
 sample_prep <- sample_recipe %>% prep(training = sample_train, retain = TRUE)
 
 # tune random forest hyperparameters (mtry) ------------------------------------
-mtry <- tuneRF(sample_train[, -n], as.factor(sample_train$Group),
-  ntreeTry = n_trees, stepFactor = 1.5, improve = 0.01,
-  trace = FALSE, plot = FALSE
-)
+invisible(capture.output(
+  mtry <- tuneRF(sample_train[, -n], as.factor(sample_train$Group),
+    ntreeTry = n_trees, stepFactor = 1.5, improve = 0.01,
+    trace = FALSE, plot = FALSE
+  )
+))
 
 m <- mtry[mtry[, 2] == min(mtry[, 2]), 1][1] # best value of mtry
 
@@ -89,22 +98,31 @@ rf <- rand_forest(trees = n_trees, mtry = m, mode = "classification") %>%
   set_engine("randomForest", importance = TRUE, localImp = TRUE) %>%
   fit(Group ~ ., data = juice(sample_prep))
 
+cat("(Print) basic results from random forest model\n\n")
 print(rf$fit) # show basic results for the random forest model
 
+# defining colors for each group
+groups <- levels(sample_test$Group)
+group_color <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3")
+
 # warning: the next plot will be displayed but not saved (save it manually)
-plot(rf$fit) # error rate
+cat("\n(New plot window) erro rates\n\n")
+dev.new() # new plot window
+plot(rf$fit, main = "Error rates", col = c("black", group_color)) # error rate
+legend("right",
+  legend = c("OOB", groups), col = c("black", group_color), lty = 1
+) # legends
 
 # evaluate the model -----------------------------------------------------------
 # roc curves
 pred_for_roc_curve <- predict(rf, sample_test[, -n], type = "prob")
 
-groups <- levels(sample_test$Group)
-group_color <- c("#F8766D", "#00BA38", "#619CFF")
-
-auc <- numeric(length(groups)) # vector for holding values of area under ROC
-names(auc) <- grougps
+auc <- rep(NA, length(groups)) # vector for holding values of area under ROC
+names(auc) <- groups
 
 # warning: the next plot will be displayed but not saved (save it manually)
+cat("(New plot window) ROC curves\n\n")
+dev.new() # open new plot window
 for (i in seq_len(length(groups))) {
   # Define which observations belong to class[i]
   true_values <- sample_test$Group == groups[i]
@@ -118,8 +136,9 @@ for (i in seq_len(length(groups))) {
     plot(perf, col = group_color[i], add = TRUE)
   }
   # Calculate the area under the curve (AUC) and print it to screen
-  auc[i] <- performance(pred, measure = "auc")
+  auc[i] <- unlist(performance(pred, measure = "auc")@ y.values)
 }
+legend("bottomright", legend = groups, col = group_color, lty = 1) # legends
 
 # confusion matrix
 pred_for_table <- predict(rf, sample_test[, -n])
@@ -129,22 +148,39 @@ confusion_mat <- table(
   predicted = unlist(pred_for_table)
 )
 
+cat("(Print) confusion matrix based on testing samples\n\n")
+print(confusion_mat)
+
 # plot main results ------------------------------------------------------------
 # tree with least number of nodes
-tree_num <- which(rf$fit$forest$ndbigtree == min(rf$fit$forest$ndbigtree))
+tree_num <- which(rf$fit$forest$ndbigtree == min(rf$fit$forest$ndbigtree))[1]
 p_rf_tree <- tree_func(final_model = rf$fit, tree_num)
 
 # measures of variable importance for the fitted random forest model -----------
-impt_measures <- measure_importance(rf_model$fit)
+cat("\n(This process can take a while) please wait ...\n\n")
+
+impt_measures <- measure_importance(rf$fit)
 
 # chosing best set of importance measures to use
 p_choose_imp_1 <- plot_importance_ggpairs(impt_measures)
 p_choose_imp_2 <- plot_importance_rankings(impt_measures)
 
+cat("(New plot window) Importance measures (plot 1)\n\n")
+dev.new() # new plot window
+print(p_choose_imp_1)
+
+cat("(New plot window) Importance measures (plot 2)\n\n")
+dev.new() # new plot window
+print(p_choose_imp_2)
+
+# !!! STOP HERE AND EVALUATE THE RESULTS BEFORE CHOOSING THE THREE MEASURES !!!
+
 # define your chosen measures replacing NULL by the measure' name
-first_measure <- NULL
-second_measure <- NULL
-third_measure <- NULL
+first_measure <- NULL # ex: first_measure <- "no_of_trees"
+second_measure <- NULL # ex: second_measure <- "no_of_nodes"
+third_measure <- NULL # ex: third_measure <- "mean_min_depth"
+
+cat("(Again ... this process can take a while) please wait ...\n\n")
 
 # test if user has chosen the three importance measures
 if (is.null(first_measure) | is.null(first_measure) | is.null(first_measure)) {
@@ -161,7 +197,7 @@ p_imp <- plot_multi_way_importance(impt_measures,
 )
 
 # plot variable depth distribution
-min_depth <- min_depth_distribution(rf_model$fit)
+min_depth <- min_depth_distribution(rf$fit)
 p_min_depth <- plot_min_depth_distribution(min_depth, mean_sample = "top_trees")
 
 # plot interaction between pairs of variables in the random forest
@@ -171,8 +207,11 @@ impt_vars <- important_variables(impt_measures,
 )
 
 # level of interacton between variables (min depth interacitons)
-interaction_vars <- min_depth_interactions(rf_model$fit, impt_vars)
+interaction_vars <- min_depth_interactions(rf$fit, impt_vars)
 p_interaction <- plot_min_depth_interactions(interaction_vars)
 
-# generate outputs ---------------------------------------------------------
-source("./codes/outputs.R")
+# generate outputs ----------------------------------------------------------
+cat("(Saving plots and tables) please wait ...\n\n")
+suppressWarnings(suppressMessages(source("./codes/outputs.R")))
+
+cat("(Script finished) outpus in folder ", paste0(getwd(), "/outputs"), "\n")

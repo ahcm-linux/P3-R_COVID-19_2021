@@ -22,4 +22,5 @@ suppressMessages({
 
   cat("Loaded Packages:\n")
   print(sapply(load_lib, require, character = TRUE)) # load
+  cat("\n\n")
 })
