@@ -51,7 +51,7 @@ source("./codes/functions.R") # load functions
 set.seed(2021) # seed for replicate the replicating the analysis
 
 # load dataset -----------------------------------------------------------------
-my_data <- read.csv("./data/my_data.csv", header = TRUE) # original data
+my_data <- read.csv("./data/my_data_1.csv", header = TRUE) # original data
 my_data$Group <- factor(my_data$Group) # groups as factors
 
 n <- ncol(my_data) # number of columns
@@ -183,7 +183,7 @@ group_color <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3")
 cat("\n(New plot window) erro rates\n\n")
 dev.new() # new plot window
 plot(rf$fit, main = "Error rates", col = c("black", group_color)) # error rate
-legend("right",
+legend("topright",
   legend = c("OOB", groups), col = c("black", group_color), lty = 1
 ) # legends
 

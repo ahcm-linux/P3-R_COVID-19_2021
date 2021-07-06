@@ -1,0 +1,3 @@
+# Figure caption
+
+[FigS1] Point estimates and confidence intervals (CIs) for the relative effects of ICU and Non-ICU on each observed variable. Only showing observed variables with significantly different mean values between ICU and Non-ICU. The dashed horizontal line marks the point of no differences between ICU and Non-ICU. CIs below (above) the dashed horizontal indicate variables with greater tendency for higher values in ICU (Non-ICU). Confidence level of CIs equals 95%.  
