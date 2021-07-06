@@ -17,4 +17,4 @@ Figures and tables generated from the data analysis are in the directories of th
 * Download the folder __two-sample-tests__ from this repository
 * Open it in RStudio and set it as your working directory
 * Run the entire file _script.R_ located in the folder __codes__
-* The pdf and png figures will be generated and save in the directories of the folder __outputs__ 
+* The pdf and png figures will be generated and saved in the directories of the folder __outputs__ 
