@@ -15,7 +15,7 @@ width_factor <- 4 # factor for determining figure width
 
 height_factor <- 2 # factor for determining figure height
 
-log_fc_cutpoint <- 0.5 # log fold change cutpoint
+log_fc_cutpoint <- 1 # log fold change cutpoint
 
 # SEED -------------------------------------------------------------------------
 set.seed(2021) # fix seed
@@ -80,13 +80,13 @@ fig_pval_relef <- ggplot(tab_npar_t_tests, aes(x = vars, y = Estimator)) +
   ) +
   labs(y = "Relative effect", x = "")
 
-# log fold change (using untransformed data)
+# log2 fold change (using untransformed data)
 untransformed_data <- 2^wide_data[, -k]
 untransformed_data$Group <- wide_data[, k]
 group_means <- untransformed_data %>%
   group_by(Group) %>%
   summarise_all(mean)
-log_fc <- apply(log(group_means[, -1]), 2, diff)
+log_fc <- apply(log2(group_means[, -1]), 2, diff)
 names(log_fc) <- original_colnames[-k]
 
 # volcano plot for log fold change x t-test p-value
