@@ -1,2 +1,4 @@
 *.RData
 references/
+*.pdf
+*.png

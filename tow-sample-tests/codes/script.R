@@ -15,6 +15,8 @@ width_factor <- 4 # factor for determining figure width
 
 height_factor <- 2 # factor for determining figure height
 
+log_fc_cutpoint <- 0.5 # log fold change cutpoint
+
 # SEED -------------------------------------------------------------------------
 set.seed(2021) # fix seed
 
@@ -77,6 +79,54 @@ fig_pval_relef <- ggplot(tab_npar_t_tests, aes(x = vars, y = Estimator)) +
     panel.grid = element_blank()
   ) +
   labs(y = "Relative effect", x = "")
+
+# log fold change (using untransformed data)
+untransformed_data <- 2^wide_data[, -k]
+untransformed_data$Group <- wide_data[, k]
+group_means <- untransformed_data %>%
+  group_by(Group) %>%
+  summarise_all(mean)
+log_fc <- apply(log(group_means[, -1]), 2, diff)
+names(log_fc) <- original_colnames[-k]
+
+# volcano plot for log fold change x t-test p-value
+vars <- match(rownames(npar_t_tests_res), names(log_fc))
+volcano_data <- data.frame(fc = log_fc, p = npar_t_tests_res[vars, "p.Value"])
+cond <- abs(volcano_data$fc) > log_fc_cutpoint & volcano_data$p < 0.05
+volcano_data$sign <- ifelse(cond,
+  ifelse(volcano_data$fc < 0, "neg", "pos"), "none"
+)
+volcano_data$labs <- names(log_fc)
+volcano_data$labs[!cond] <- NA
+
+fig_volcano_log_fc <- ggplot(volcano_data, aes(
+  x = fc, y = p, label = labs, colour = sign
+)) +
+  geom_hline(yintercept = 0.05, linetype = "dashed", alpha = 0.3) +
+  geom_vline(
+    xintercept = c(-log_fc_cutpoint, log_fc_cutpoint),
+    linetype = "dashed", alpha = 0.3
+  ) +
+  geom_point(size = 2, alpha = 0.4) +
+  scale_colour_manual("Legend: ",
+    values = c("neg" = "red", "pos" = "blue", "none" = "grey"),
+    labels = c(
+      "neg" = "ICU downregulated", "pos" = "ICU upreguladed",
+      "none" = "Nonsignificant ICU/Non-ICU differences"
+    )
+  ) +
+  geom_text_repel(
+    show.legend = FALSE, max.overlaps = 10, direction = "both",
+    angle = 0, segment.color = grey(0.9)
+  ) +
+  scale_y_continuous(breaks = scales::pretty_breaks()) +
+  scale_x_continuous(breaks = scales::pretty_breaks()) +
+  theme_light(base_size = 12) +
+  theme(
+    legend.position = "top",
+    legend.box.background = ggplot2::element_rect(colour = "black", fill = NA)
+  ) +
+  labs(x = "Log fold change", y = "P-value for the t-test")
 
 # OUTPUTS ----------------------------------------------------------------------
 # save tables and figures

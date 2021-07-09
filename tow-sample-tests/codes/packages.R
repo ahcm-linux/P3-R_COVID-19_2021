@@ -5,6 +5,7 @@ suppressMessages({
     "dplyr",
     # graphics
     "ggplot2",
+    "ggrepel",
     "scales",
     # data description
     "MVN",
