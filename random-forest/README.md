@@ -1,2 +1,2 @@
 # Detailed instructions will be given soon ...
-For now, just read carefully the file _script.R_ located inside the folder named __codes__
+For now, just read carefully the file _script.R_ located inside the folder named _codes_
